@@ -12,9 +12,6 @@ class QuickSettingService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        if (!AuthHelper.hasWriteSecureSettingsPermission(application)) {
-            Toast.makeText(application, "权限不足", Toast.LENGTH_SHORT).show()
-        }
         isDark = !isDark
         Settings.Secure.putInt(
             contentResolver,
@@ -27,11 +24,9 @@ class QuickSettingService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
-        if (AuthHelper.hasWriteSecureSettingsPermission(application)) {
-            isDark =
-                Settings.Secure.getInt(contentResolver, "reduce_bright_colors_activated", 0) == 1
-            qsTile.state = if (isDark) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            qsTile.updateTile()
-        }
+        isDark =
+            Settings.Secure.getInt(contentResolver, "reduce_bright_colors_activated", 0) == 1
+        qsTile.state = if (isDark) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+        qsTile.updateTile()
     }
 }

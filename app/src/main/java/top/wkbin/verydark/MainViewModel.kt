@@ -16,22 +16,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
     init {
-        if (!_isWork.value){
-            if (RootChecker.isDeviceRooted()){
-                val permission = "android.permission.WRITE_SECURE_SETTINGS"
-                val command = "pm grant ${application.packageName} $permission"
-                val status = Runtime.getRuntime().exec(command).waitFor()
-                if (status != -1){
-                    _isWork.value = true
+        if (!_isWork.value) {
+            if (RootChecker.isDeviceRooted()) {
+                viewModelScope.launch {
+                    if (AuthHelper.grantWriteSecureSettingsViaRoot(application)) {
+                        _isWork.value = true
+                    }
                 }
             }
         }
     }
 
-    fun checkWork(){
+    fun checkWork() {
         viewModelScope.launch {
             delay(500)
-            if (AuthHelper.hasWriteSecureSettingsPermission(getApplication())){
+            if (AuthHelper.hasWriteSecureSettingsPermission(getApplication())) {
                 _isWork.value = true
             }
         }

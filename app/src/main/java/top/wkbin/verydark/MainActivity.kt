@@ -1,5 +1,6 @@
 package top.wkbin.verydark
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -176,7 +177,7 @@ class MainActivity : ComponentActivity(), Shizuku.OnBinderReceivedListener,
         .UserServiceArgs(ComponentName(APPLICATION_ID, UserService::class.java.name))
         .daemon(false)
         .processNameSuffix("adb_shell")
-        .debuggable(false)
+        .debuggable(true)
         .version(1)
 
 
@@ -207,17 +208,27 @@ class MainActivity : ComponentActivity(), Shizuku.OnBinderReceivedListener,
         // 使用derivedStateOf使状态能够响应变化
 
         LaunchedEffect(isWork) {
-            if (isWork) {
-                isDark = Settings.Secure.getInt(
-                    context.contentResolver,
-                    "reduce_bright_colors_activated",
+            if (isWork && AuthHelper.hasWriteSecureSettingsPermission(context)) {
+                isDark = try {
+                    Settings.Secure.getInt(
+                        context.contentResolver,
+                        "reduce_bright_colors_activated",
+                        0
+                    ) == 1
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+                currentLight = try {
+                    Settings.Secure.getInt(
+                        context.contentResolver,
+                        "reduce_bright_colors_level",
+                        100
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
                     0
-                ) == 1
-                currentLight = Settings.Secure.getInt(
-                    context.contentResolver,
-                    "reduce_bright_colors_level",
-                    100
-                )
+                }
             }
         }
 
@@ -269,7 +280,11 @@ class MainActivity : ComponentActivity(), Shizuku.OnBinderReceivedListener,
                 valueRange = 0f..100f,
                 onValueChange = {
                     currentLight = it.toInt()
-                    Settings.Secure.putInt(context.contentResolver,"reduce_bright_colors_level",100 - currentLight)
+                    Settings.Secure.putInt(
+                        context.contentResolver,
+                        "reduce_bright_colors_level",
+                        100 - currentLight
+                    )
                 })
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -314,12 +329,18 @@ class MainActivity : ComponentActivity(), Shizuku.OnBinderReceivedListener,
         if (binder != null && binder.pingBinder()) {
             userService = IUserService.Stub.asInterface(binder)
             if (AuthHelper.hasWriteSecureSettingsPermission(this)) {
+                mainViewModel.checkWork()
                 return
             }
 
-            val permission = "android.permission.WRITE_SECURE_SETTINGS"
-            val command = "pm grant $packageName $permission"
-            userService?.execLine(command)
+            userService?.execArr(
+                arrayOf(
+                    "pm",
+                    "grant",
+                    packageName,
+                    Manifest.permission.WRITE_SECURE_SETTINGS
+                )
+            )
             mainViewModel.checkWork()
         }
     }

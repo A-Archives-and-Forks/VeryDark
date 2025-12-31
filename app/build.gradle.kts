@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -70,4 +69,6 @@ dependencies {
     implementation(libs.provider)
     implementation(libs.lsposed.hiddenapibypass)
     implementation(libs.android.hidden.api)
+    implementation ("androidx.compose.material:material-icons-core")
+    implementation ("androidx.compose.material:material-icons-extended")
 }

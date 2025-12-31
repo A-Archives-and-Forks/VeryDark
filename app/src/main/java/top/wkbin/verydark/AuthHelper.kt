@@ -6,13 +6,14 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import rikka.shizuku.Shizuku
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.ShizukuRemoteProcess
 import java.io.DataOutputStream
+import androidx.core.net.toUri
 
 object AuthHelper {
     private const val TAG = "AuthHelper"
@@ -21,7 +22,15 @@ object AuthHelper {
      * 检查是否有 WRITE_SECURE_SETTINGS 权限
      */
     fun hasWriteSecureSettingsPermission(context: Context): Boolean {
-        return context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+        return try {
+            val cr = context.contentResolver
+            val originalValue = Settings.Secure.getInt(cr, "reduce_bright_colors_activated", 0)
+            Settings.Secure.putInt(cr, "reduce_bright_colors_activated", originalValue)
+            true
+        } catch (e: Exception) {
+            Log.v(TAG, "WRITE_SECURE_SETTINGS permission check failed: ${e.message}")
+            false
+        }
     }
     
     /**
@@ -79,6 +88,11 @@ object AuthHelper {
      */
     fun grantWriteSecureSettingsViaShizuku(context: Context): Boolean {
         return try {
+            if (hasWriteSecureSettingsPermission(context)) {
+                Log.d(TAG, "已有 WRITE_SECURE_SETTINGS 权限，无需重复授权")
+                return true
+            }
+            
             if (!isShizukuAuthorized()) {
                 Log.e(TAG, "Shizuku 未授权，无法执行命令")
                 return false
@@ -88,18 +102,12 @@ object AuthHelper {
             val permission = "android.permission.WRITE_SECURE_SETTINGS"
             val command = "pm grant $packageName $permission"
             
-            // 使用 Shizuku 执行命令。
-            // 既然 newProcess 是私有的，我们可以使用 Shizuku.newRemoteProcess 或者通过反射
-            // 但在最新 SDK 中，推荐使用 Shizuku.newProcess(String[] cmd, String[] env, String dir)
-            // 如果报错是私有，可能是因为导入的库版本或混淆问题。
-            // 尝试使用其提供的公共入口
             val process = Shizuku::class.java.getMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
                 .invoke(null, arrayOf("sh", "-c", command), null, null) as ShizukuRemoteProcess
 
             val exitCode = process.waitFor()
             
             if (exitCode == 0) {
-                // 命令执行成功，验证权限
                 Thread.sleep(500)
                 if (hasWriteSecureSettingsPermission(context)) {
                     Log.d(TAG, "通过 Shizuku 成功授予 WRITE_SECURE_SETTINGS 权限")
@@ -137,6 +145,11 @@ object AuthHelper {
      */
     suspend fun grantWriteSecureSettingsViaRoot(context: Context): Boolean = withContext(Dispatchers.IO) {
         try {
+            if (hasWriteSecureSettingsPermission(context)) {
+                Log.d(TAG, "已有 WRITE_SECURE_SETTINGS 权限，无需重复授权")
+                return@withContext true
+            }
+            
             val packageName = context.packageName
             val command = "pm grant $packageName android.permission.WRITE_SECURE_SETTINGS"
             
@@ -147,7 +160,17 @@ object AuthHelper {
             outputStream.flush()
             
             val exitValue = process.waitFor()
-            exitValue == 0
+            
+            if (exitValue == 0) {
+                Thread.sleep(500)
+                if (hasWriteSecureSettingsPermission(context)) {
+                    Log.d(TAG, "通过 Root 成功授予 WRITE_SECURE_SETTINGS 权限")
+                    return@withContext true
+                }
+            }
+            
+            Log.w(TAG, "Root 命令执行结束，但权限验证失败或退出码不为0: $exitValue")
+            false
         } catch (e: Exception) {
             Log.e(TAG, "通过 Root 授予权限失败", e)
             false
@@ -177,7 +200,7 @@ object AuthHelper {
     private fun openShizukuInstallPage(context: Context) {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse("https://shizuku.rikka.app/")
+                data = "https://shizuku.rikka.app/".toUri()
             }
             context.startActivity(intent)
         } catch (e: Exception) {
