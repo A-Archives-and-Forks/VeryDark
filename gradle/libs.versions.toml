@@ -1,17 +1,19 @@
 [versions]
-agp = "9.1.1"
+agp = "9.2.1"
 androidHiddenApi = "35.0"
 api = "13.1.5"
 hiddenapibypassVersion = "6.1"
-kotlin = "2.3.20"
-coreKtx = "1.18.0"
-lifecycleRuntimeKtx = "2.10.0"
+kotlin = "2.4.0"
+coreKtx = "1.19.0"
+lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
-composeBom = "2026.03.01"
+composeBom = "2026.06.01"
 shizuku = "13.1.5"
 
 [libraries]
 android-hidden-api = { module = "com.anggrayudi:android-hidden-api", version.ref = "androidHiddenApi" }
+androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }

@@ -27,6 +27,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -69,6 +70,6 @@ dependencies {
     implementation(libs.provider)
     implementation(libs.lsposed.hiddenapibypass)
     implementation(libs.android.hidden.api)
-    implementation ("androidx.compose.material:material-icons-core")
-    implementation ("androidx.compose.material:material-icons-extended")
+    implementation (libs.androidx.compose.material.icons.core)
+    implementation (libs.androidx.compose.material.icons.extended)
 }
