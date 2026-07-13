@@ -8,15 +8,15 @@ plugins {
 android {
     namespace = "top.wkbin.verydark"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "top.wkbin.verydark"
         minSdk = 31
-        targetSdk = 36
-        versionCode = 3
-        versionName = "2.3.2"
+        targetSdk = 37
+        versionCode = 4
+        versionName = "2.3.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -70,6 +70,6 @@ dependencies {
     implementation(libs.provider)
     implementation(libs.lsposed.hiddenapibypass)
     implementation(libs.android.hidden.api)
-    implementation (libs.androidx.compose.material.icons.core)
-    implementation (libs.androidx.compose.material.icons.extended)
+    implementation (libs.androidx.material.icons.core)
+    implementation (libs.androidx.material.icons.extended)
 }
